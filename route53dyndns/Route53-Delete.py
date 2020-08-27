@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 def lambda_handler(event, context):
     route53 = boto3.client('route53')
     sqs = boto3.client('sqs')
-    queue_url = 'https://sqs.us-east-1.amazonaws.com/663386616047/Route53-Delete-HIDS-SQS.fifo'
+    queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Delete-HIDS-SQS.fifo'
 
     # Define Check For Existing DNS Record
     def check_for_existing_dns(zone_id,record_name,rectype):
