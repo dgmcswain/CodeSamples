@@ -19,14 +19,10 @@ def lambda_handler(event, context):
     dynamodb_resource = boto3.resource('dynamodb')
     state = event['detail']['state']
     excluded_tags = [
-        'CPMWorkerMachine',
-        'Domain Controller',
-        'aws.qualnet',
-        '_GOLD_',
-        'Amazon EKS',
-        'EKSName',
-        'EKSNessusInstance',
-        'PDHUB']
+        'tag1',
+        'tag2',
+        'tag3'       
+        ]
 
     # Send data to SQS queue in multi-tenant
     def send_sqs_mt(func_ip,mgmt_ip,queue_url,HCQISName,HCQISNameMgt,OpSys,action):
