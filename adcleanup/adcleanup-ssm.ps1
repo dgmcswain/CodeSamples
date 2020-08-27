@@ -26,15 +26,15 @@ function Remove-HCQISNameFromAD($servername,$cred,$os,$instanceid,$accountid) {
 }
 
 function Remove-DNSRecord($servername,$servernamemgt) {
-    $dnsrec = Get-DnsServerResourceRecord -ZoneName "aws.qualnet.org" -Name $servername
-    $dnsrecmgt = Get-DnsServerResourceRecord -ZoneName "aws.qualnet.org" -Name $servernamemgt -ErrorAction Ignore
+    $dnsrec = Get-DnsServerResourceRecord -ZoneName "aws.domain.org" -Name $servername
+    $dnsrecmgt = Get-DnsServerResourceRecord -ZoneName "aws.domain.org" -Name $servernamemgt -ErrorAction Ignore
     if ($dnsrec) {
         Remove-DnsServerResourceRecord Get-ADComputer -Identity $servername -RRType $dnsrec.RecordType -Name $servername -Force -ErrorAction Stop
         $successmsg = @((((date | Out-String).trim() + " EST - ") + "Info: Removing DNS record '$servername' from Forward Lookup Zone 'aws.qualnet.org.'").trim())
         $global:successarray += $successmsg
     }
     if ($dnsrecmgt) {
-        Remove-DnsServerResourceRecord -ZoneName "aws.qualnet.org" -RRType $dnsrecmgt.RecordType -Name $servernamemgt -Force -ErrorAction Stop
+        Remove-DnsServerResourceRecord -ZoneName "aws.domain.org" -RRType $dnsrecmgt.RecordType -Name $servernamemgt -Force -ErrorAction Stop
         $successmsg = @((((date | Out-String).trim() + " EST - ") + "Info: Removing DNS record '$servernamemgt' from Forward Lookup Zone 'aws.qualnet.org.'").trim())
         $global:successarray += $successmsg
     }
