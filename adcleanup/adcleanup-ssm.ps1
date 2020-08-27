@@ -5,7 +5,7 @@ $messageCount = $messages.ApproximateNumberOfMessages
 $global:username= (Get-SSMParameterValue -Name adcleanup_user).Parameters[0].Value
 $global:password = (Get-SSMParameterValue -Name adcleanup_password -WithDecryption $True).Parameters[0].Value | ConvertTo-SecureString -asPlainText -Force
 $global:cred = New-Object System.Management.Automation.PSCredential($username,$password)
-$snstopic = 'arn:aws:sns:us-east-1:150370869210:ADCleanup-SNS'
+$snstopic = 'arn:aws:sns:us-east-1:123456789012:ADCleanup-SNS'
 $global:successarray = $Null
 $global:errorarray = $Null
 
