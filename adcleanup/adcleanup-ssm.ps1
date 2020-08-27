@@ -73,7 +73,7 @@ if ($messageCount -gt 0) {
                     Break
                 }
                 default {
-                    $out = Write-Output "Info: 'HCQIS-ExcludeFromCleanup' tag of instance '$instanceid' contains an invlaid value of '$exclude'. Valid tag values are 'AD', 'DNS', or 'All'." 
+                    $out = Write-Output "Info: 'ExcludeFromCleanup' tag of instance '$instanceid' contains an invlaid value of '$exclude'. Valid tag values are 'AD', 'DNS', or 'All'." 
                     ((date | Out-String).trim() + " EST - " + $out).trim()
                 }
             }
