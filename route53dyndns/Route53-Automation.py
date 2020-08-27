@@ -168,12 +168,12 @@ def lambda_handler(event, context):
         # Determine Instance State and set variables as appropiate
         if state == "shutting-down":
             action = 'DELETE'
-            queue_url = 'https://sqs.us-east-1.amazonaws.com/150370869210/Route53-Delete-HIDS-SQS.fifo'
+            queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Delete-HIDS-SQS.fifo'
             MessageGroupId = 'r53AutomationDelete'
             print("Action: " + action)
         elif state == "pending": 
             action = 'CREATE'
-            queue_url = 'https://sqs.us-east-1.amazonaws.com/150370869210/Route53-Create-HIDS-SQS.fifo'
+            queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Create-HIDS-SQS.fifo'
             MessageGroupId = 'r53AutomationCreate'
             print("Action: " + action)
 
