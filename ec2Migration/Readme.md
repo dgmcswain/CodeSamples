@@ -1,3 +1,3 @@
-# Standalone: EC2 Tenancy Migration from Dedicated to Default Tenancy
+# EC2 Tenancy Migration from Dedicated to Default Tenancy
 
-Usage:  pyhton ec2migration.py <instance-id>
+# Usage:  python **ec2migration.py* *<instance-id>*
