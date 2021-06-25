@@ -135,7 +135,7 @@ Resources:
   CreateCWE:
     Type: AWS::Events::Rule
     Properties:
-      Description: CloudWatch Event - Create DNS Records
+      Description: CloudWatch Event - Create DNS Record
       ScheduleExpression: rate(5 minutes)
       State: ENABLED
       Targets:
