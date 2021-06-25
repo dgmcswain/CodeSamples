@@ -48,7 +48,7 @@ def lambda_handler(event, context):
         func_ip = msg_body['func_ip']
         mgmt_ip = msg_body['mgmt_ip']
         hosted_zone_name = 'r53autotest.org.'
-        hosted_zone_id = "Z09433722TPAXQVEZSHF7"
+        hosted_zone_id = "Z123456789ABCDEFGHIJKL"
         OpSys = msg_body['OpSys']
         print(DNSName,action,func_ip,mgmt_ip)
         if OpSys == "CentOS" or OpSys == "RHEL":
@@ -79,7 +79,7 @@ def lambda_handler(event, context):
                         print(record_name[i] + " " + "'" + rectype[i] + "'" + " record created.")
 
         # Create Reverse Lookup DNS Records
-        rev_lookup_zone_id = 'Z02184172HLGMN6EJZKA2'
+        rev_lookup_zone_id = 'Z123456789ABCDEFGHIJKL'
         rev_lookup_zone_name = '10.in-addr.arpa'
         rev_func_ip = msg_body['rev_func_ip']
         rev_mgmt_ip = msg_body['rev_mgmt_ip']
