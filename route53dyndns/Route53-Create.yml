@@ -132,7 +132,7 @@ Resources:
                           print(record_name[i] + " " + "'" + rectype + "'" + " record created.")
       Runtime: python3.7
       Timeout: '900'
-  CreateCWE:
+  CWE:
     Type: AWS::Events::Rule
     Properties:
       Description: CloudWatch Event - Create DNS Record
@@ -153,5 +153,5 @@ Resources:
       Principal: events.amazonaws.com
       SourceArn:
         Fn::GetAtt:
-        - CreateCWE
+        - CWE
         - Arn
