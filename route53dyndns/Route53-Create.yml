@@ -135,7 +135,7 @@ Resources:
   CreateCWE:
     Type: AWS::Events::Rule
     Properties:
-      Description: CloudWatch Event - DNS Network Info on EC2 Shutdown 
+      Description: CloudWatch Event - Create DNS Records
       ScheduleExpression: rate(5 minutes)
       State: ENABLED
       Targets:
