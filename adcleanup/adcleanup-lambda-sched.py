@@ -16,7 +16,7 @@ def lambda_handler(event, context):
     domain_hosts = socket.gethostbyname_ex('ad.domain.org')[2]
 
     # Set filter for describe_instances() API call using IPs associated with FQDN of AD domain
-    ec2_info = ec2.describe_instances(Filters=[{'Name': 'private-ip-address','Values': qualnet_hosts}])
+    ec2_info = ec2.describe_instances(Filters=[{'Name': 'private-ip-address','Values': domain_hosts }])
 
     # Get EC2 instance IDs and store in list
     ec2_ids = []
