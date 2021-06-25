@@ -1,6 +1,6 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Dynamic Creation of Route 53 Records
+Description: Dynamic Management of Route 53 Records
 Resources:
   LambdaExecRole:
     Type: AWS::IAM::Role
@@ -150,7 +150,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties:
       Description: CloudWatch Event - Delete DNS Record 
-      ScheduleExpression: rate(5 minutes)
+      ScheduleExpression: rate(30 minutes)
       State: ENABLED
       Targets:
       - Arn:
