@@ -18,6 +18,10 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: /
+  SQS:
+    Type: AWS::SQS::Queue
+    QueueName: Route53-Create-SQS.fifo
+    FifoQueue: True
   Lambda:
     Type: AWS::Lambda::Function
     Properties:
