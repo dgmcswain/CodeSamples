@@ -42,30 +42,30 @@ def lambda_handler(event, context):
         msg_body = event['Records'][r]['body']
         msg_body = msg_body.replace("\'","\"")
         msg_body = json.loads(msg_body)
-        HCQISName = msg_body['HCQISName']
-        HCQISNameMgt = msg_body['HCQISNameMgt']
+        DNSName = msg_body['DNSName']
+        DNSNameMgt = msg_body['DNSNameMgt']
         action = msg_body['action']
         func_ip = msg_body['func_ip']
         mgmt_ip = msg_body['mgmt_ip']
         hosted_zone_name = 'r53autotest.org.'
         hosted_zone_id = "Z09433722TPAXQVEZSHF7"
         OpSys = msg_body['OpSys']
-        print(HCQISName,action,func_ip,mgmt_ip)
+        print(DNSName,action,func_ip,mgmt_ip)
         if OpSys == "CentOS" or OpSys == "RHEL":
             # Build DNS Record Sets
             if func_ip == mgmt_ip:
                 rectype = ['A','CNAME']
                 zone_id = hosted_zone_id
-                value = [func_ip,HCQISName + '.' + hosted_zone_name]
-                record_name = [HCQISName + '.' + hosted_zone_name, HCQISNameMgt + '.' + hosted_zone_name]
+                value = [func_ip,DNSName + '.' + hosted_zone_name]
+                record_name = [DNSName + '.' + hosted_zone_name, DNSNameMgt + '.' + hosted_zone_name]
             else:
                 rectype = ['A','A']
                 zone_id = hosted_zone_id
                 value = [func_ip,mgmt_ip]
-                record_name = [HCQISName + '.' + hosted_zone_name, HCQISNameMgt + '.'+ hosted_zone_name]
+                record_name = [DNSName + '.' + hosted_zone_name, DNSNameMgt + '.'+ hosted_zone_name]
             for i in [0,1]:
                 if not check_for_existing_dns(zone_id,record_name[i],rectype[i]) == 'NOERROR':
-                    print("Creating DNS records for " + HCQISName + ", " + HCQISNameMgt )
+                    print("Creating DNS records for " + DNSName + ", " + DNSNameMgt )
                     change_resource_record(zone_id,action,record_name[i],rectype[i],value[i])
                     recset = [zone_id,action,record_name[i],rectype[i],value[i]]
                     print(recset)
@@ -79,21 +79,14 @@ def lambda_handler(event, context):
                         print(record_name[i] + " " + "'" + rectype[i] + "'" + " record created.")
 
         # Create Reverse Lookup DNS Records
-        rev_lookup_zone_id_137 = 'Z02184172HLGMN6EJZKA2'
-        rev_lookup_zone_id_237 = 'Z01975901UJ7FYZLPP2NS'
-        rev_lookup_zone_name_137 = '137.10.in-addr.arpa'
-        rev_lookup_zone_name_237 = '237.10.in-addr.arpa'
+        rev_lookup_zone_id = 'Z02184172HLGMN6EJZKA2'
+        rev_lookup_zone_name = '10.in-addr.arpa'
         rev_func_ip = msg_body['rev_func_ip']
         rev_mgmt_ip = msg_body['rev_mgmt_ip']
         rectype = 'PTR'
-        if int(func_ip.split('.')[1]) == 137:
-            zone_id = rev_lookup_zone_id_137
-            value = [HCQISName + '.' + hosted_zone_name, HCQISNameMgt + '.'+ hosted_zone_name]
-            record_name = [rev_func_ip + '.' + rev_lookup_zone_name_137, rev_mgmt_ip + '.' + rev_lookup_zone_name_137]
-        elif int(func_ip.split('.')[1]) == 237:
-            zone_id = rev_lookup_zone_id_237
-            value = [HCQISName + '.' + hosted_zone_name, HCQISNameMgt + '.'+ hosted_zone_name]
-            record_name = [rev_func_ip + '.' + rev_lookup_zone_name_237, rev_mgmt_ip + '.' + rev_lookup_zone_name_237]
+        zone_id = rev_lookup_zone_id
+        value = [DNSName + '.' + hosted_zone_name, DNSNameMgt + '.'+ hosted_zone_name]
+        record_name = [rev_func_ip + '.' + rev_lookup_zone_name, rev_mgmt_ip + '.' + rev_lookup_zone_name]
 
         for i in [0,1]:
             change_resource_record(zone_id,action,record_name[i],rectype,value[i])
