@@ -25,7 +25,7 @@ def lambda_handler(event, context):
         ]
 
     # Send data to SQS queue in multi-tenant
-    def send_sqs_mt(func_ip,mgmt_ip,queue_url,HCQISName,HCQISNameMgt,OpSys,action):
+    def send_sqs_mt(func_ip,mgmt_ip,queue_url,DNSName,DNSNameMgt,OpSys,action):
         # Reverse Func IP
         rev_func_ip = func_ip.split('.')
         del rev_func_ip[0:2]
@@ -39,8 +39,8 @@ def lambda_handler(event, context):
         # Send info to MT SQS queue
         print('Sending info to SQS queue: ' + queue_url)
         msg = {
-            "HCQISName": HCQISName,
-            "HCQISNameMgt": HCQISNameMgt,
+            "DNSName": DNSName,
+            "DNSNameMgt": DNSNameMgt,
             "func_ip": func_ip,
             "mgmt_ip": mgmt_ip,
             "rev_func_ip": rev_func_ip,
@@ -90,13 +90,13 @@ def lambda_handler(event, context):
         net = table.get_item(Key={'InstanceId': instance_id},AttributesToGet=['NetworkConfig']) # Get NetworkConfig
         net = net['Item']['NetworkConfig']
         net = json.loads(net) # Convert string dict to dict
-        print("Retriving 'HCQISName' from table 'R53DNS'")
-        name = table.get_item(Key={'InstanceId': instance_id},AttributesToGet=['HCQISName']) # Get HCQISName
-        HCQISName = name['Item']['HCQISName']
+        print("Retriving 'DNSName' from table 'R53DNS'")
+        name = table.get_item(Key={'InstanceId': instance_id},AttributesToGet=['DNSName']) # Get DNSName
+        DNSName = name['Item']['DNSName']
         print("Retriving 'OpSys' from table 'R53DNS'")
         opsys = table.get_item(Key={'InstanceId': instance_id},AttributesToGet=['OpSys']) # Get OpSys
         OpSys = opsys['Item']['OpSys']
-        return net, HCQISName, OpSys
+        return net, DNSName, OpSys
 
     #### Main Logic ####
     # Exclude all instances with any string match listed in 'excluded_tags'
@@ -122,10 +122,10 @@ def lambda_handler(event, context):
                 ec2_instance = ec2_resource.Instance(instance_id)
                 w = random.randint(30,90)
             else:
-                print("Parsing 'HCQISName' and 'AMIOperatingSys' from EC2 Tags")
+                print("Parsing 'DNSName' and 'AMIOperatingSys' from EC2 Tags")
                 for tag in ec2_instance.tags:
-                    if tag['Key'] == 'HCQISName':
-                        HCQISName = tag['Value']
+                    if tag['Key'] == 'DNSName':
+                        DNSName = tag['Value']
                     elif tag['Key'] == 'AMIOperatingSys':
                         OpSys = tag['Value']
                 instance = ec2_client.describe_instances(InstanceIds=[instance_id])
@@ -134,20 +134,20 @@ def lambda_handler(event, context):
                 network_dump = json.dumps(network_config,default=json_serial) # Serialize data before JSONifying
                 network_config = str(network_dump) # Convert dict to string
                 # Put config information into DynamoDB table
-                print("Putting 'NetworkConfig' and 'HCQISName' into table 'R53DNS")
-                table.put_item(Item={'InstanceId': instance_id,'NetworkConfig': network_config,'HCQISName': HCQISName,'OpSys': OpSys})
+                print("Putting 'NetworkConfig' and 'DNSName' into table 'R53DNS")
+                table.put_item(Item={'InstanceId': instance_id,'NetworkConfig': network_config,'DNSName': DNSName,'OpSys': OpSys})
                 # Retrieve config information from DynamoDB table
                 info = get_config_info(instance_id)
                 net = info[0]
-                HCQISName = info[1]
-                HCQISNameMgt = HCQISName + "-mgt"
+                DNSName = info[1]
+                DNSNameMgt = DNSName + "-mgt"
                 OpSys = info[2]
         else:
             # Retrieve config information from DynamoDB table
             info = get_config_info(instance_id)
             net = info[0]
-            HCQISName = info[1]
-            HCQISNameMgt = HCQISName + "-mgt"
+            DNSName = info[1]
+            DNSNameMgt = DNSName + "-mgt"
             OpSys = info[2]
 
         # Parse IP information from net
@@ -164,17 +164,17 @@ def lambda_handler(event, context):
         # Determine Instance State and set variables as appropiate
         if state == "shutting-down":
             action = 'DELETE'
-            queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Delete-HIDS-SQS.fifo'
+            queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Delete-SQS.fifo'
             MessageGroupId = 'r53AutomationDelete'
             print("Action: " + action)
         elif state == "pending": 
             action = 'CREATE'
-            queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Create-HIDS-SQS.fifo'
+            queue_url = 'https://sqs.us-east-1.amazonaws.com/123456789012/Route53-Create-SQS.fifo'
             MessageGroupId = 'r53AutomationCreate'
             print("Action: " + action)
 
         # Send info to MT SQS queue
-        send_sqs_mt(func_ip,mgmt_ip,queue_url,HCQISName,HCQISNameMgt,OpSys,action)
+        send_sqs_mt(func_ip,mgmt_ip,queue_url,DNSName,DNSNameMgt,OpSys,action)
 
         # Delete table items from DynamoDB
         if state == "shutting-down":
