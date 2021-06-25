@@ -18,7 +18,11 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Path: /
-  Lambda:
+SQS:
+    Type: AWS::SQS::Queue
+    QueueName: Route53-Delete-Lambda.fifo
+    FifoQueue: True
+Lambda:
     Type: AWS::Lambda::Function
     Properties:
       Handler: index.lambda_handler
