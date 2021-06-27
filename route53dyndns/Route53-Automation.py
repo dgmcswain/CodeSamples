@@ -7,7 +7,6 @@ from botocore.exceptions import ClientError
 from datetime import datetime
 
 def lambda_handler(event, context):
-    # pylint: disable=E1101
     print("Parsing Event: " + str(event['detail-type']))
     print(event['detail'])
     instance_id = event['detail']['instance-id']
