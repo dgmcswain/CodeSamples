@@ -44,7 +44,7 @@ Resources:
               cleanup_exclude = 'Blank'
 
               for tag in ec2instance.tags:
-                  if tag['Key'] == 'HCQISName':
+                  if tag['Key'] == 'InstanceName':
                       instance_name = tag['Value']
                   elif tag['Key'] == 'AMIOperatingSys':
                       instance_os = tag['Value']
@@ -61,7 +61,7 @@ Resources:
                       "ADO": ado_id,
                       "AccountId": account_id,
                       "InstanceId": instance_id,
-                      "HCQISName": instance_name,
+                      "InstanceName": instance_name,
                       "OS": instance_os,
                       "Exclude": cleanup_exclude
                       }))
