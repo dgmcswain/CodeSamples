@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Autotagging Hub Account IAM Role"
+Resources:
+  AutotagRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: autotag-assumed-role
+      Description: "Assumed role for hub account resoure tagging"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/PowerUserAccess
+        - !Ref AutotaggingPolicy
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: { AWS: arn:aws:iam::123456879012:root }
+            Action:
+              - sts:AssumeRole
+  AutotagPolicy:
+    Type: "AWS::IAM::ManagedPolicy"
+    Properties:
+      ManagedPolicyName: autotag-assumed-role-policy
+      Description:  Managed Policy
+      Path: /
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - "iam:Tag*"
+            Resource: "*"
