@@ -10,7 +10,7 @@ $global:successarray = $Null
 $global:errorarray = $Null
 
 # Define Cleanup Functions
-function Remove-HCQISNameFromAD($servername,$cred,$os,$instanceid,$accountid) {
+function Remove-InstanceNameFromAD($servername,$cred,$os,$instanceid,$accountid) {
     try {
         (Get-ADComputer -Identity $servername -Credential $cred | Remove-ADObject -Credential $cred -Confirm:$False -ErrorAction Stop | Out-String).trim()
         $successmsg = @((((date | Out-String).trim() + " EST - ") + "Info: Removing '$os' Server '$servername' from AD. Associated with '$instanceid' in account '$accountid'").trim())
@@ -48,7 +48,7 @@ if ($messageCount -gt 0) {
         $messageCount -= 1
         $message = Receive-SQSMessage -QueueUrl $queueurl -Region us-east-1
         $messagebody = $message.body | ConvertFrom-Json
-        $servername = $messagebody.HCQISName
+        $servername = $messagebody.InstanceName
         $servernamemgt = $servername + "-mgt"
         $os = $messagebody.OS
         $instanceid = $messagebody.InstanceId
@@ -65,7 +65,7 @@ if ($messageCount -gt 0) {
                 "DNS" {
                     $out = Write-Output "Info: '$servername' excluded from DNS Cleanup opeartion." 
                     ((date | Out-String).trim() + " EST - " + $out).trim()
-                    Remove-HCQISNameFromAD($servername,$cred,$os,$instanceid,$accountid)
+                    Remove-InstanceNameFromAD($servername,$cred,$os,$instanceid,$accountid)
                 }
                 "All" {
                     $out = Write-Output "Info: '$servername' excluded from AD & DNS Cleanup opeartions." 
@@ -78,7 +78,7 @@ if ($messageCount -gt 0) {
                 }
             }
         } else {
-            Remove-HCQISNameFromAD($servername,$cred,$os,$instanceid,$accountid)
+            Remove-InstanceNameFromAD($servername,$cred,$os,$instanceid,$accountid)
             Remove-DNSRecord($servername,$servernamemgt)
         }
         # Delete SQS Message
