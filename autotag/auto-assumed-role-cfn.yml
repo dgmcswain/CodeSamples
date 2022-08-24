@@ -8,7 +8,7 @@ Resources:
       Description: "Assumed role for hub account resoure tagging"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/PowerUserAccess
-        - !Ref AutotaggingPolicy
+        - !Ref AutotagPolicy
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
