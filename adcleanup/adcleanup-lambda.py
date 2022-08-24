@@ -30,7 +30,7 @@ def lambda_handler(event, context):
             "ADO": ado_id,
             "AccountId": account_id,
             "InstanceId": instance_id,
-            "HCQISName": instance_name,
+            "InstanceName": instance_name,
             "OS": instance_os,
             "Exclude": cleanup_exclude
             }))
