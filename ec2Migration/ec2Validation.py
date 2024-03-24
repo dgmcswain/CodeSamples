@@ -1,5 +1,4 @@
 import boto3
-import botocore
 import sys
 from botocore.exceptions import ClientError
 from datetime import datetime
@@ -7,9 +6,7 @@ from datetime import datetime
 ### Global Variables
 global instance_id
 instance_id = sys.argv[1]
-iam_profile = None
 client = boto3.client('ec2')
-
 
 ##### FUNCTIONS ######
 ### Define Log function ###
@@ -23,7 +20,7 @@ def get_ec2_tenancy(instance_id):
         try:
             ec2 = client.describe_instances(InstanceIds=[instance_id])
             ec2_tenancy = ec2['Reservations'][0]['Instances'][0]['Placement']['Tenancy']
-        except botocore.exceptions.ClientError as e:
+        except ClientError as e:
             log("Error parsing EC2 tenancy: {}".format(e.response['Error']))
         return ec2_tenancy
 
@@ -33,7 +30,7 @@ def get_ec2_term_protection(instance_id):
             try:
                 term = client.describe_instance_attribute(Attribute='disableApiTermination',InstanceId=instance_id)
                 term_protection = term['DisableApiTermination']['Value']
-            except botocore.exceptions.ClientError as e:
+            except ClientError as e:
                 log("Error parsing EC2 tenancy: {}".format(e.response['Error']))
             return term_protection
 
@@ -49,7 +46,7 @@ def main():
     else:
         print(' Dedicated tenancy: Failed. Instance not configured for dedicated tenancy.')
 
-    if ec2_termination_protection == False:
+    if not ec2_termination_protection:
         print(' Termination Protection disabled: Passed!')
     else:
         print(' Termination Protection enabled: Failed. Please disable Termination Protection.')
