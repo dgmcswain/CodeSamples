@@ -1,10 +1,6 @@
 import boto3
 import botocore
 import sys
-import time
-import json
-import collections
-import logging
 from botocore.exceptions import ClientError
 from datetime import datetime
 
@@ -17,8 +13,8 @@ client = boto3.client('ec2')
 
 ##### FUNCTIONS ######
 ### Define Log function ###
-def log(error):
-    print('{}Z {}'.format(datetime.utcnow().isoformat(), error))
+def log(msg):
+    print(f'{datetime.UTC().isoformat()}Z: {msg}')
 
 #### Get EC2 System Information ###
 # Get EC2 tenancy
