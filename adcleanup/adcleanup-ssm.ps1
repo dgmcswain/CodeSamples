@@ -1,104 +1,74 @@
-# Main variable definition
-$queueurl = 'https://sqs.us-east-1.amazonaws.com/123456789012/ADCleanup-SQS'
-$messages = Get-SQSQueueAttribute -QueueUrl $queueurl -AttributeName ApproximateNumberOfMessages -Region us-east-1
-$messageCount = $messages.ApproximateNumberOfMessages
-$global:username= (Get-SSMParameterValue -Name adcleanup_user).Parameters[0].Value
-$global:password = (Get-SSMParameterValue -Name adcleanup_password -WithDecryption $True).Parameters[0].Value | ConvertTo-SecureString -asPlainText -Force
-$global:cred = New-Object System.Management.Automation.PSCredential($username,$password)
+# Main variable definition (combined and improved)
+$queueUrl = 'https://sqs.us-east-1.amazonaws.com/123456789012/ADCleanup-SQS'
+$messageCount = (Get-SQSQueueAttribute -QueueUrl $queueUrl -AttributeName ApproximateNumberOfMessages -Region us-east-1).ApproximateNumberOfMessages
+$credentials = New-Object System.Management.Automation.PSCredential((Get-SSMParameterValue -Name adcleanup_user).Parameters[0].Value, (Get-SSMParameterValue -Name adcleanup_password -WithDecryption $True).Parameters[0].Value | ConvertTo-SecureString -AsPlainText -Force)
+$dnsZone = "aws.domain.org"
+$successArray = @()
+$errorArray = @()
 $snstopic = 'arn:aws:sns:us-east-1:123456789012:ADCleanup-SNS'
-$global:successarray = $Null
-$global:errorarray = $Null
 
-# Define Cleanup Functions
-function Remove-InstanceNameFromAD($servername,$cred,$os,$instanceid,$accountid) {
+# Define Cleanup Functions (combined and improved error handling)
+function Remove-InstanceFromAD {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $serverName,
+        [string] $os,
+        [string] $instanceId,
+        [string] $accountId,
+        [switch] $RemoveAD = $true,
+        [switch] $RemoveDNS = $true
+    )
+
     try {
-        (Get-ADComputer -Identity $servername -Credential $cred | Remove-ADObject -Credential $cred -Confirm:$False -ErrorAction Stop | Out-String).trim()
-        $successmsg = @((((date | Out-String).trim() + " EST - ") + "Info: Removing '$os' Server '$servername' from AD. Associated with '$instanceid' in account '$accountid'").trim())
-        $global:successarray += $successmsg
+        if ($RemoveAD -and (Get-ADComputer -Identity $serverName -Credential $credentials)) {
+            Remove-ADObject -Identity $serverName -Credential $credentials -Confirm:$False -ErrorAction Stop
+            $successArray += "Info: Removing '$os' Server '$serverName' from AD. Associated with '$instanceId' in account '$accountId'"
+        }
+        if ($RemoveDNS) {
+            $dnsRecord = Get-DnsServerResourceRecord -ZoneName $dnsZone -Name $serverName
+            $dnsRecordMgmt = Get-DnsServerResourceRecord -ZoneName $dnsZone -Name ($serverName + "-mgt") -ErrorAction SilentlyContinue
+            if ($dnsRecord) {
+                Remove-DnsServerResourceRecord -ZoneName $dnsZone -RRType $dnsRecord.RecordType -Name $serverName -Force -ErrorAction Stop
+                $successArray += "Info: Removing DNS record '$serverName' from Forward Lookup Zone '$dnsZone'"
+            }
+            if ($dnsRecordMgmt) {
+                Remove-DnsServerResourceRecord -ZoneName $dnsZone -RRType $dnsRecordMgmt.RecordType -Name ($serverName + "-mgt") -Force -ErrorAction Stop
+                $successArray += "Info: Removing DNS record '$serverName-mgt' from Forward Lookup Zone '$dnsZone'"
+            }
+        }
     } catch {
-        $out1 = Write-Output $_.Exception.Message
-        $out2 = Write-Output "Info: Error removing '$os' Server '$servername' associated with '$instanceid' in account '$accountid'." 
-        $errormsg = @("************** Error **************",
-            ((date | Out-String).trim() + " EST - " + $out1).trim(),
-            ((date | Out-String).trim() + " EST - " + $out2).trim())
-        $global:errorarray += $errormsg
+        $errorArray += @("************** Error **************",
+            $_.Exception.Message,
+            "Info: Error removing '$os' Server '$serverName' associated with '$instanceId' in account '$accountId'.")
     }
 }
 
-function Remove-DNSRecord($servername,$servernamemgt) {
-    $dnsrec = Get-DnsServerResourceRecord -ZoneName "aws.domain.org" -Name $servername
-    $dnsrecmgt = Get-DnsServerResourceRecord -ZoneName "aws.domain.org" -Name $servernamemgt -ErrorAction Ignore
-    if ($dnsrec) {
-        Remove-DnsServerResourceRecord | Get-ADComputer -Identity $servername -RRType $dnsrec.RecordType -Name $servername -Force -ErrorAction Stop
-        $successmsg = @((((date | Out-String).trim() + " EST - ") + "Info: Removing DNS record '$servername' from Forward Lookup Zone 'aws.qualnet.org.'").trim())
-        $global:successarray += $successmsg
-    }
-    if ($dnsrecmgt) {
-        Remove-DnsServerResourceRecord -ZoneName "aws.domain.org" -RRType $dnsrecmgt.RecordType -Name $servernamemgt -Force -ErrorAction Stop
-        $successmsg = @((((date | Out-String).trim() + " EST - ") + "Info: Removing DNS record '$servernamemgt' from Forward Lookup Zone 'aws.qualnet.org.'").trim())
-        $global:successarray += $successmsg
-    }
-}
-
+# Process SQS Queue
 if ($messageCount -gt 0) {
-    # Loop through messages and delete after processing
-    (date | Out-String).trim() + " EST - " + "There are '$messageCount' servers queued for AD/DNS Cleanup."
-    While ($messageCount -gt 0) {
-        $messageTotal += 1
-        $messageCount -= 1
-        $message = Receive-SQSMessage -QueueUrl $queueurl -Region us-east-1
-        $messagebody = $message.body | ConvertFrom-Json
-        $servername = $messagebody.InstanceName
-        $servernamemgt = $servername + "-mgt"
-        $os = $messagebody.OS
-        $instanceid = $messagebody.InstanceId
-        $accountid = $messagebody.AccountId
-        $exclude = $messagebody.Exclude
-        # Exclusion Case Logic
-        if ($exclude -ne 'Blank') {
-            Switch ($exclude) {
-                "AD" {
-                    $out = Write-Output "Info: '$servername' excluded from AD Cleanup opeartion." 
-                    ((date | Out-String).trim() + " EST - " + $out).trim()
-                    if ($os -like '*Windows*') {Remove-DNSRecord($servername,$servernamemgt)}
-                }
-                "DNS" {
-                    $out = Write-Output "Info: '$servername' excluded from DNS Cleanup opeartion." 
-                    ((date | Out-String).trim() + " EST - " + $out).trim()
-                    Remove-InstanceNameFromAD($servername,$cred,$os,$instanceid,$accountid)
-                }
-                "All" {
-                    $out = Write-Output "Info: '$servername' excluded from AD & DNS Cleanup opeartions." 
-                    ((date | Out-String).trim() + " EST - " + $out).trim()
-                    Break
-                }
-                default {
-                    $out = Write-Output "Info: 'ExcludeFromCleanup' tag of instance '$instanceid' contains an invlaid value of '$exclude'. Valid tag values are 'AD', 'DNS', or 'All'." 
-                    ((date | Out-String).trim() + " EST - " + $out).trim()
+    Write-Output (((date | Out-String).Trim() + " EST - ") + "There are '$messageCount' servers queued for AD/DNS Cleanup.")
+    while ($messageCount -gt 0) {
+        $message = Receive-SQSMessage -QueueUrl $queueUrl -Region us-east-1
+        $messageBody = $message.Body | ConvertFrom-Json
+        $serverName = $messageBody.InstanceName
+        $os = $messageBody.OS
+        $instanceId = $messageBody.InstanceId
+        $accountId = $messageBody.AccountId
+        $exclude = $messageBody.Exclude
+
+        switch ($exclude) {
+            "AD" {
+                Write-Output "Info: '$serverName' excluded from AD Cleanup operation."
+                if ($os -like '*Windows*') {
+                    Remove-InstanceFromAD -ServerName $serverName -OS $os -InstanceId $instanceId -AccountId $accountId -RemoveDNS
                 }
             }
-        } else {
-            Remove-InstanceNameFromAD($servername,$cred,$os,$instanceid,$accountid)
-            Remove-DNSRecord($servername,$servernamemgt)
-        }
-        # Delete SQS Message
-        try {
-            Remove-SQSMessage -QueueUrl $queueurl -ReceiptHandle $message.ReceiptHandle -region us-east-1 -Force -ErrorAction Stop
-        } catch {
-            Write-Error $_.Exception.Message
-        }
-    }
-    Write-Output $successarray
-    Write-Output $errorarray
-    $snsmessage = @("There were '$messageTotal' servers queued for AD Cleanup","`n",$successarray,$errorarray)
-    $snsmessage = $snsmessage | Out-String
-    Publish-SNSMessage -TopicArn $snstopic -subject "AD Cleanup Daily Log" -Message $snsmessage
-    if ($errorarray -ne $Null) {
-        $status = 1
-    }
-    exit $status
-} else { 
-    Write-Output (((date | Out-String).trim() + " EST - ") + "There are 0 servers queued for AD Cleanup.").trim()
-    $snsmessage = (((date | Out-String).trim() + " EST - ") + "There are 0 servers queued for AD Cleanup.").trim()
-    Publish-SNSMessage -TopicArn $snstopic -subject "AD Cleanup Daily Log" -Message $snsmessage
-}
+            "DNS" {
+                Write-Output "Info: '$serverName' excluded from DNS Cleanup operation."
+                Remove-InstanceFromAD -ServerName $serverName -OS $os -InstanceId $instanceId -AccountId $accountId -RemoveAD
+            }
+            "All" {
+                Write-Output "Info: '$serverName' excluded from AD & DNS Cleanup operations."
+                Break
+            }
+            default {
+                Write-Output "Info: 'ExcludeFromCleanup' tag of instance '$instanceId'
