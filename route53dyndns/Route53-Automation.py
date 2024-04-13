@@ -136,29 +136,25 @@ def lambda_handler(event, context):
                 print("Putting 'NetworkConfig' and 'DNSName' into table 'R53DNS")
                 table.put_item(Item={'InstanceId': instance_id,'NetworkConfig': network_config,'DNSName': DNSName,'OpSys': OpSys})
                 # Retrieve config information from DynamoDB table
-                info = get_config_info(instance_id)
-                net = info[0]
-                DNSName = info[1]
+                net, DNSName, OpSys = get_config_info(instance_id)
                 DNSNameMgt = DNSName + "-mgt"
-                OpSys = info[2]
         else:
             # Retrieve config information from DynamoDB table
-            info = get_config_info(instance_id)
-            net = info[0]
-            DNSName = info[1]
-            DNSNameMgt = DNSName + "-mgt"
-            OpSys = info[2]
+            net, DNSName, OpSys = get_config_info(instance_id)
 
         # Parse IP information from net
         print("Gathering IP information for func and mgmt")
-        for i in range(len(net)):
-            if len(net) > 1:
-                if net[i]['Attachment']['DeviceIndex'] == 0:
-                    func_ip = net[i]['PrivateIpAddress']
-                elif net[i]['Attachment']['DeviceIndex'] == 1:
-                    mgmt_ip = net[i]['PrivateIpAddress']
-            elif len(net) == 1:
-                func_ip = mgmt_ip = net[i]['PrivateIpAddress']
+
+    for device in net:
+        device_index = device['Attachment']['DeviceIndex']
+        if device_index == 0:
+            func_ip = device['PrivateIpAddress']
+        elif device_index == 1:
+            mgmt_ip = device['PrivateIpAddress']
+        # Early exit if both IPs are assigned and there's only one device
+        if func_ip and mgmt_ip and len(net) == 1:
+            break
+
 
         # Determine Instance State and set variables as appropiate
         if state == "shutting-down":
