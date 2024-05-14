@@ -196,10 +196,10 @@ AccountName: [REQUIRED] Used for naming resources within the cfn, should be cons
 
 ``` jsonb
   {
-    "Group": "ENT_OKTA_AWS_nonprod_slingshot-poweruser",
+    "Group": "ENT_OKTA_AWS_nonprod_projectname-poweruser",
     "PermissionSet": "AllAccountsPowerUser",
-    "AccountName": "wmg-slingshot-nonprod",
-    "AccountNum": "230732114497"
+    "AccountName": "projectname-nonprod",
+    "AccountNum": "123546789012"
   }
 
 ```
