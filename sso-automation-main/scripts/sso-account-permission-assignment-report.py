@@ -164,29 +164,6 @@ def describe_user(userId, identityStoreId):
     
     return userInfo
 
-# def get_employee_remove_list():
-#   emp_file = open("./scripts/employee_remove.txt", "r")
-  
-#   emp_data = emp_file.read()
-  
-#   emp_data = emp_data.split("\n")
-#   # reading the file
-#   emp_file.close()
-  
-#   return emp_data
-
-# def is_a_blanket_remove(userName):
-#     remove_list = get_employee_remove_list()
-#     if userName in remove_list:
-#       print(f"Found {userName} in remove list")
-#       return True
-#     elif userName in ["Jimmy.Zhu@wmg.com", "Tim.Yevdayev@wmg.com", "Taylor.Neill@wmg.com", "kkonig@navisite.com"]:
-#       return True
-#     elif "navisite.com" in userName:
-#       return True
-#     else:
-#       return False
-
 def get_group_members(identityStoreId, group_id):
     client = boto3.client('identitystore')
     member_list = []
