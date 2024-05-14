@@ -182,33 +182,6 @@ def get_group_members(identityStoreId, group_id):
         member_list.append(describe_user_response)
     return member_list
 
-
-"""
-remove_user_assignment
-
-Retrieves the user metadata and attributes from user id in an identity store to return a human friendly username.
-
-Parameters:
--- String: userId
--- String: identityStoreId
-Returns:
--- Dictionary: username and userid
-"""
-# def remove_user_assignment(principalId, instance_arn, account, permission_set_arn, dry_run=False):
-#     client = boto3.client('sso-admin')
-#     if dry_run != True: 
-#       print(f"Executing Delete of Assignment")
-#       response = client.delete_account_assignment(
-#           InstanceArn=instance_arn,
-#           TargetId=account,
-#           TargetType='AWS_ACCOUNT',
-#           PermissionSetArn=permission_set_arn,
-#           PrincipalType='USER',
-#           PrincipalId=principalId
-#       )
-#     else: 
-#       print(f"Skipping delete for dry run")
-
 """
 is_member_in_group
 
