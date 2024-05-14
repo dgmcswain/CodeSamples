@@ -11,7 +11,7 @@ app = cdk.App()
 
 properties = {
   "env_name": "ENT_OKTA_AWS_",
-  "sso_instance_arn": "arn:aws:sso:::instance/ssoins-7223dd0fdfc46891",
+  "sso_instance_arn": "arn:aws:sso:::instance/ssoins-1111111111111111",
   "identity_store": "d-1111111111"
 }
 
