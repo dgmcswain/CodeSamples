@@ -116,7 +116,7 @@ def split_list(input_list, new_size):
      
     for batch in split_list:
         list_array[n] = batch
-        n = n + 1
+        n += 1
     
     return list_array
 
